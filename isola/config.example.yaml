@@ -1,4 +1,4 @@
-# MemWeave 配置示例。复制为 config.yaml 后填写。
+# Isola 配置示例。复制为 config.yaml 后填写。
 # 安全：api_key 一律用 *_api_key_env 指向环境变量名，绝不在此明文写 api_key。
 judge:
   type: openai_compat
@@ -13,7 +13,7 @@ harness:
 channel:
   type: cli
 store:
-  path: "~/.memweave/memweave.db"   # SQLite 真相源；~ 会展开
+  path: "~/.isola/isola.db"   # SQLite 真相源；~ 会展开
 isolation_s: 300                    # 隔离期（秒）：高置信先投递、到期才落定记忆
 projects:                           # 初始项目（首次播种；之后以注册表为权威）。须有稳定 id（从 1 连续）
   - {id: 1, name: "示例项目A", desc: "项目A的目标导向描述（用于归属判定）", status: active}

@@ -4,7 +4,7 @@ import sys
 import pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
-from memweave.judge import parse_judge_output
+from isola.judge import parse_judge_output
 
 P = [{"id": 1, "name": "甲公司尽调", "desc": ""},
      {"id": 2, "name": "乙公司尽调", "desc": ""}]

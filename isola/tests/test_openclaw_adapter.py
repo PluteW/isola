@@ -4,7 +4,7 @@ import sys
 import pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
-from memweave.adapters.openclaw import OpenClawAdapter, _last_json
+from isola.adapters.openclaw import OpenClawAdapter, _last_json
 
 
 class _R:

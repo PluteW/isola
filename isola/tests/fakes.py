@@ -1,7 +1,7 @@
 """测试替身（fake adapter / judge）——离线集成测试用，不依赖真飞书/OpenClaw/模型。
 对应 SDD §4 的 ChannelAdapter / HarnessAdapter / Judge 契约。"""
 from __future__ import annotations
-from memweave.models import InboundMessage
+from isola.models import InboundMessage
 
 
 class FakeChannel:

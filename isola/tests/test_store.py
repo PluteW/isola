@@ -5,8 +5,8 @@ import pathlib
 import sqlite3
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
-from memweave.store import Store
-from memweave.models import (
+from isola.store import Store
+from isola.models import (
     InboundMessage, RouteDecision, MemoryItem,
     TENTATIVE, COMMITTED, CORRECTED, WAITING_CONFIRMATION,
     DISP_SENT, DISP_PENDING, JOB_PENDING, JOB_RUNNING, JOB_DONE, JOB_CANCELLED,
@@ -176,7 +176,7 @@ def test_info_gate_blocks_low_signal():
 
 def test_info_gate_keeps_short_high_value():
     """短但高价值指令不被信息量门误杀。"""
-    from memweave.writeback import info_gate
+    from isola.writeback import info_gate
     assert info_gate("禁GPU") is True
     assert info_gate("别联网") is True
     assert info_gate("用本地模型") is True
@@ -186,7 +186,7 @@ def test_info_gate_keeps_short_high_value():
 
 def test_durability_gate_classifies():
     """记忆价值门：试探/假设/临时/否定→tentative；决策/事实/约束→stable。"""
-    from memweave.writeback import durability
+    from isola.writeback import durability
     for t in ["这个方案可能行，先试试", "也许用本地模型更好", "假设毛利率能到30%",
               "暂时先这样，回头再改", "那个办法行不通"]:
         assert durability(t) == "tentative", t
@@ -208,7 +208,7 @@ def test_durability_set_on_commit():
 
 def test_sensitive_gate_detects():
     """敏感信息门：凭据/密钥/私钥/敏感路径→拦截；仅提及 token/api 等词的正常讨论→放行。"""
-    from memweave.writeback import sensitive_gate
+    from isola.writeback import sensitive_gate
     for t in ["我的 key 是 sk-abcd1234efgh5678ijkl", "配置 password=hunter2024Z",
               "AKIAIOSF0DNN7EXAMPLE", "-----BEGIN RSA PRIVATE KEY-----",
               "Authorization: Bearer eyJhbGc1234567890abcdef", "看 /Users/x/.ssh/id_rsa"]:

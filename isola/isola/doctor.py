@@ -97,7 +97,7 @@ def _harness(cfg_path):
 _STEPS = [
     (Step("python", "Python ≥ 3.9", "python3 --version", "安装/切换到 Python 3.9+"), _py),
     (Step("pyyaml", "PyYAML 已装", "python3 -c 'import yaml'", "pip install -r requirements.txt"), _yaml),
-    (Step("config", "配置存在且合法", "python -m memweave doctor", "python -m memweave init 后填写 config.yaml"), _config),
+    (Step("config", "配置存在且合法", "python -m isola doctor", "python -m isola init 后填写 config.yaml"), _config),
     (Step("judge", "判定器端点连通", "", "检查 judge.base_url 与网络；设置 JUDGE_API_KEY 环境变量"), _judge),
     (Step("harness", "执行后端就绪", "", "llm_direct: 检查 base_url；openclaw: 注册 provider/model（见 AGENTS.md）"), _harness),
 ]

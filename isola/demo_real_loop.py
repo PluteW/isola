@@ -6,14 +6,14 @@
 import os, sys, time, tempfile, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 
-from memweave.store import Store
-from memweave.registry import Registry
-from memweave.router import Router
-from memweave.judge import OpenAICompatJudge
-from memweave.core import MemWeaveCore
-from memweave.models import InboundMessage
-from memweave.adapters.cli import CLIChannel
-from memweave.adapters.llm_harness import LLMHarness
+from isola.store import Store
+from isola.registry import Registry
+from isola.router import Router
+from isola.judge import OpenAICompatJudge
+from isola.core import IsolaCore
+from isola.models import InboundMessage
+from isola.adapters.cli import CLIChannel
+from isola.adapters.llm_harness import LLMHarness
 
 KEY = os.environ["DEEPSEEK_API_KEY"]
 DS = "https://api.deepseek.com"
@@ -41,7 +41,7 @@ def main():
     reg.add("AI技术周报", "每周 AI 技术动态整理：模型发布、论文、开源热榜")
     judge = OpenAICompatJudge(DS, "deepseek-chat", KEY)
     harness = LLMHarness(DS, "deepseek-chat", KEY)
-    core = MemWeaveCore(store, reg, Router(judge), CLIChannel(verbose=True),
+    core = IsolaCore(store, reg, Router(judge), CLIChannel(verbose=True),
                         harness, isolation_s=300, now_fn=lambda: T0)
 
     print("=" * 70)

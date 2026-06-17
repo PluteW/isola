@@ -1,25 +1,7 @@
-<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MemWeave">
-  <title>MemWeave (monochrome)</title>
-  <desc>Single-color favicon master: a bold interlaced M. One over/under notch preserves the woven read; uses currentColor so it adapts to light, dark, and terminal backgrounds.</desc>
-
-  <!-- ===========================================================
-       FAVICON / MONO MASTER (per design, option c):
-       - Simplified from the primary mark: thicker strokes (14), no center node, no resume stub.
-       - Legibility does NOT depend on the fine weave gap; the M reads on its own.
-       - One single bold over/under notch is retained so the glyph still hints 'weave'
-         rather than being a plain M, but it is wide enough to survive small sizes.
-       - currentColor => drop it on any light/dark/terminal background and it inherits the text color.
-       Geometry matches the primary logo's M skeleton so the two read as one family.
-       =========================================================== -->
-
-  <g fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
-    <!-- UNDER strand (right post + right diagonal), drawn first and broken at the valley by a bold gap -->
-    <path d="M52 13 L52 51"/>
-    <path d="M52 13 L37 33"/>
-
-    <!-- OVER strand (left post + one continuous diagonal through the valley up to top-right),
-         drawn last so it sits on top at the single crossing -->
-    <path d="M12 13 L12 51"/>
-    <path d="M12 13 L32 42 L47 22"/>
-  </g>
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Isola">
+  <title>Isola (monochrome)</title>
+  <desc>Single-color three-bar mark for Isola; inherits currentColor for light, dark, and terminal use.</desc>
+  <rect x="11" y="27" width="10" height="28" rx="5" fill="currentColor"/>
+  <rect x="27" y="8" width="10" height="47" rx="5" fill="currentColor"/>
+  <rect x="43" y="18" width="10" height="37" rx="5" fill="currentColor"/>
 </svg>

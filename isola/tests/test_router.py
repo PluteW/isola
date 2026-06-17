@@ -3,7 +3,7 @@ import sys
 import pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
-from memweave.router import Router, is_low_signal, detect_cross_ref
+from isola.router import Router, is_low_signal, detect_cross_ref
 
 PROJECTS = [
     {"id": 1, "name": "甲公司尽调", "desc": "公司级尽调"},

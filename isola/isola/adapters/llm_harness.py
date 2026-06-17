@@ -1,6 +1,6 @@
 """LLMHarness：最小真实 HarnessAdapter——每 session_key 独立对话历史，dispatch 调真 LLM。
 
-session 隔离 = 历史按 session_key（proj:<id>）分桶。这正是 MemWeave 要保证的"项目隔离"
+session 隔离 = 历史按 session_key（proj:<id>）分桶。这正是 Isola 要保证的"项目隔离"
 在 harness 侧的下游体现：归属判对 → 消息进对的 session → 该项目的回复只看到该项目历史。
 SDD §4 HarnessAdapter 契约（含 idempotency_key / reset_session / dispatch 返回 dict）。
 OpenClawAdapter 是同契约的另一实现（之后做，验证 harness 无关）。

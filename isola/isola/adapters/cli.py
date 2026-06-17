@@ -1,7 +1,7 @@
 """CLIChannel：最小真实 ChannelAdapter（替代飞书，用于本机端到端真跑）。
 入站=脚本/文件喂的 InboundMessage；出站=打印到终端。SDD §4 ChannelAdapter 契约。"""
 from __future__ import annotations
-from memweave.models import InboundMessage
+from isola.models import InboundMessage
 
 
 class CLIChannel:

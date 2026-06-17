@@ -1,4 +1,4 @@
-"""MemWeaveCore（Facade，SDD v2 §2/§3）：装配真相源+判定+状态机+adapter。
+"""IsolaCore（Facade，SDD v2 §2/§3）：装配真相源+判定+状态机+adapter。
 
 handle_message 主路径 / handle_confirm 低置信确认 / handle_correction 纠正回路 / tick 轮询恢复。
 时序遵循 SDD §3：事件幂等 → 消息落库 → 判定 → 先落 decision → 副作用 → 入写入队列。
@@ -25,7 +25,7 @@ def _did() -> str:
     return uuid.uuid4().hex
 
 
-class MemWeaveCore:
+class IsolaCore:
     def __init__(self, store, registry, router, channel, harness,
                  isolation_s: float = 300, now_fn=time.time):
         self.store = store

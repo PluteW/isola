@@ -6,11 +6,11 @@ import os
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 
-from memweave.store import Store
-from memweave.registry import Registry
-from memweave.router import Router
-from memweave.core import MemWeaveCore
-from memweave.models import (
+from isola.store import Store
+from isola.registry import Registry
+from isola.router import Router
+from isola.core import IsolaCore
+from isola.models import (
     InboundMessage, WAITING_CONFIRMATION, TENTATIVE, COMMITTED, CORRECTED, DISP_SENT, DISP_PENDING,
 )
 from fakes import FakeChannel, FakeHarness, FakeJudge
@@ -26,7 +26,7 @@ def _build(judge_pid):
     reg.add("乙公司尽调", "公司级尽调：主营/订单/风电")   # pid 2
     reg.add("AI技术周报", "每周 AI 动态整理")              # pid 3（T-INT-4 连续纠正用）
     ch, hn = FakeChannel(), FakeHarness()
-    core = MemWeaveCore(store, reg, Router(FakeJudge(judge_pid)), ch, hn,
+    core = IsolaCore(store, reg, Router(FakeJudge(judge_pid)), ch, hn,
                         isolation_s=300, now_fn=lambda: T0)
     return core, store, ch, hn, reg_path
 

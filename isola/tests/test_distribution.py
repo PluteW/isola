@@ -7,13 +7,13 @@ import re
 import io
 import contextlib
 
-sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))   # memweave 包
+sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))   # isola 包
 sys.path.insert(0, str(pathlib.Path(__file__).parent))          # fakes
 
 import yaml
-from memweave import config as cfgmod
-from memweave.config import load_config, build_core, ConfigError
-from memweave.models import InboundMessage
+from isola import config as cfgmod
+from isola.config import load_config, build_core, ConfigError
+from isola.models import InboundMessage
 from fakes import FakeJudge, FakeHarness, FakeChannel
 
 # 往注册表注入 fake 实现（离线，不联网）——验证装配而非真实 LLM
@@ -85,7 +85,7 @@ def test_projects_need_id():
 
 def test_doctor_readonly():
     """doctor 只读：不创建/写 store 库文件。"""
-    from memweave import doctor
+    from isola import doctor
     with tempfile.TemporaryDirectory() as d:
         db = str(pathlib.Path(d) / "must_not_exist.db")
         cp = _write_config(d, store={"path": db})
@@ -95,7 +95,7 @@ def test_doctor_readonly():
 
 def test_doctor_reports_failures():
     """缺配置 → doctor 的 config 项 fail + 给 fix。"""
-    from memweave import doctor
+    from isola import doctor
     res = doctor.run("/nonexistent/path/config.yaml")
     step = next(r for r in res if r["id"] == "config")
     assert step["status"] == "fail" and step["fix_command"], step
@@ -103,7 +103,7 @@ def test_doctor_reports_failures():
 
 def test_doctor_flags_missing_env():
     """doctor 抓出 api_key_env 指向的环境变量未设置（review 补强：防 config pass 但 chat 才炸）。"""
-    from memweave import doctor
+    from isola import doctor
     with tempfile.TemporaryDirectory() as d:
         os.environ.pop("MW_NONEXISTENT_KEY_XYZ", None)
         cp = _write_config(d, judge={"type": "fake", "api_key_env": "MW_NONEXISTENT_KEY_XYZ"})
@@ -114,7 +114,7 @@ def test_doctor_flags_missing_env():
 
 def test_cli_subcommands_exist():
     """init/doctor/chat 子命令存在、--help 可用（退出码 0）。"""
-    from memweave.__main__ import build_parser
+    from isola.__main__ import build_parser
     p = build_parser()
     assert p.parse_args(["init"]).cmd == "init"
     assert p.parse_args(["doctor", "--json"]).cmd == "doctor"

@@ -1,4 +1,4 @@
-"""MemWeave CLI 入口（分发层 v1「CLI 同步档」）。
+"""Isola CLI 入口（分发层 v1「CLI 同步档」）。
 
 子命令 init / doctor / chat，argparse subparsers + 函数 map 分派（Python idiom，非命令类）。
 不含 serve/HTTP（v0.2 experimental）。用法见 AGENTS.md。
@@ -58,7 +58,7 @@ def cmd_chat(args):
             print("空消息，未处理。", file=sys.stderr); return 2
         handle(args.text, 0)
     else:
-        print("MemWeave chat（输入消息，空行或 Ctrl-D 退出）")
+        print("Isola chat（输入消息，空行或 Ctrl-D 退出）")
         i = 0
         while True:
             try:
@@ -77,7 +77,7 @@ _COMMANDS = {"init": cmd_init, "doctor": cmd_doctor, "chat": cmd_chat}
 
 
 def build_parser():
-    p = argparse.ArgumentParser(prog="memweave",
+    p = argparse.ArgumentParser(prog="isola",
                                 description="单入口多项目作用域记忆路由（v1 CLI 同步档）")
     sub = p.add_subparsers(dest="cmd", required=True)
     pi = sub.add_parser("init", help="生成 config 模板")
