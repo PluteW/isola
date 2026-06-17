@@ -1,0 +1,3 @@
+# MemWeave 运行依赖。Python >= 3.9（实测 3.9.6 全测试绿；类型注解靠 from __future__ import annotations 惰性化兼容，未用 3.10 运行时特性）。
+# v1 CLI 档极简：仅 PyYAML（项目注册表 + 配置文件）。其余全标准库。
+PyYAML>=6

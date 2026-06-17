@@ -1,0 +1,46 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MemWeave">
+  <title>MemWeave</title>
+  <desc>An interlaced M: two woven strands cross over and under at the center without blending — memory threads from parallel projects, woven yet isolated.</desc>
+  <defs>
+    <linearGradient id="strandA" x1="0" y1="64" x2="0" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5B6CF0"/>
+      <stop offset="1" stop-color="#8A6CF0"/>
+    </linearGradient>
+    <linearGradient id="strandB" x1="64" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#16C2A3"/>
+      <stop offset="1" stop-color="#2BB3D6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded tile background -->
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#0E1430"/>
+
+  <!-- ===========================================================
+       Two strands, each a continuous path the eye can trace, that
+       interlace ONCE at the M's center valley (32,42). Per the
+       agreed rule: a single over/under event, no repeated weave.
+       STRAND A (violet) = left post -> down-diagonal into valley -> continues OVER, up to top-right.
+       STRAND B (teal)   = right post -> down-diagonal into valley -> passes UNDER (gap at center).
+       Each strand spans corner-to-corner, so together they read as a woven M.
+       =========================================================== -->
+
+  <g fill="none" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <!-- STRAND B (UNDER) drawn first: top-right post down, then diagonal toward valley,
+         BROKEN with a gap on the far approach so strand A clearly passes over it. -->
+    <path d="M52 14 L52 50" stroke="url(#strandB)"/>
+    <path d="M52 14 L38 33" stroke="url(#strandB)"/>
+    <!-- short resume of B emerging on the near side of the valley: kept short (per design)
+         so it reads as 'the thread continues under', without competing as a second diagonal. -->
+    <path d="M30 41 L22 30" stroke="url(#strandB)"/>
+
+    <!-- STRAND A (OVER) drawn last so it sits on top at the crossing:
+         top-left post down, then a single continuous diagonal up through the valley to top-right. -->
+    <path d="M12 14 L12 50" stroke="url(#strandA)"/>
+    <path d="M12 14 L32 42 L46 23" stroke="url(#strandA)"/>
+  </g>
+
+  <!-- LARGE-SIZE-ONLY single-entry / audited-reuse cue: a small node at the weave point.
+       Shrinks to a near-invisible speck at 16px, so it never adds favicon noise. -->
+  <circle cx="32" cy="42" r="3.2" fill="#0E1430"/>
+  <circle cx="32" cy="42" r="1.8" fill="#FFFFFF" opacity="0.9"/>
+</svg>

@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 运行产物（SQLite 真相源等，运行时生成，不入库）
+*.db
+*.sqlite
+*.sqlite3
+
+# 工具 / 会话状态（非项目产物）
+.claude/
+.remember/
+
+# 系统
+.DS_Store
+
+# 外部克隆仓库（数据集/工具，不入库——CLAUDE.md 约定）
+experiments/*/external/
