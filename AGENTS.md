@@ -1,7 +1,7 @@
 # Isola 安装与接入协议（面向 agent / 人）
 
-> v1「CLI 同步档」：`git clone` 即用，无需 pip 发布。一步一命令，每步可自检。
-> 本文与 `python -m isola doctor` **同源**——doctor 的每个检查项对应下面一步；agent 可用 `doctor --json` 逐项判定。
+> v1「CLI 同步档」：`git clone` 后 `pip install -e .` 即用（本地可编辑安装；PyPI 全局发布留后续）。一步一命令，每步可自检。
+> 本文与 `isola doctor` **同源**——doctor 的每个检查项对应下面一步；agent 可用 `doctor --json` 逐项判定。
 
 ## 前置
 - Python ≥ 3.9、git
@@ -14,15 +14,15 @@
 git clone https://github.com/PluteW/isola && cd isola
 ```
 
-### 2. 装依赖（仅 PyYAML）
+### 2. 安装（含依赖 PyYAML）
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
-预期：PyYAML 安装成功。失败 → 检查 pip 与 Python 版本（需 ≥3.9）。
+预期：Isola 与 PyYAML 安装成功，得到 `isola` 命令（任意目录可运行）。失败 → 检查 pip 与 Python 版本（需 ≥3.9）。
 
 ### 3. 生成配置
 ```bash
-python -m isola init
+isola init
 ```
 预期：`已生成 config.yaml`。
 
@@ -36,8 +36,8 @@ export HARNESS_API_KEY=...     # 仅 llm_direct 需要
 
 ### 5. 自检
 ```bash
-python -m isola doctor            # 人类可读
-python -m isola doctor --json     # 机器可读：每项 {id,status,check_command,fix_command,requires_human,evidence}
+isola doctor            # 人类可读
+isola doctor --json     # 机器可读：每项 {id,status,check_command,fix_command,requires_human,evidence}
 ```
 预期：`python / pyyaml / config / judge` 全 `pass`。
 - 任一 `fail` → 按该项 `fix_command` 处理后重跑。
@@ -45,7 +45,7 @@ python -m isola doctor --json     # 机器可读：每项 {id,status,check_comma
 
 ### 6. 验证端到端
 ```bash
-python -m isola chat --text "查一下项目A的近况"
+isola chat --text "查一下项目A的近况"
 ```
 预期：打印 `→ 项目 N [dispatched] ...`，消息被路由到某项目并投递落记忆。
 

@@ -15,7 +15,7 @@ DEFAULT_CONFIG = "config.yaml"
 
 
 def cmd_init(args):
-    src = pathlib.Path(__file__).parent.parent / "config.example.yaml"
+    src = pathlib.Path(__file__).parent / "config.example.yaml"   # 包内数据（pip 安装后亦可定位）
     dst = pathlib.Path(args.path)
     dst.parent.mkdir(parents=True, exist_ok=True)           # nested 路径父目录不存在则创建
     if dst.exists():

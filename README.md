@@ -42,21 +42,21 @@ Isola does not replace OpenClaw, Claude Code, or Codex, and it does not require 
 
 **Let an agent install it.** The repository includes a machine-readable readiness check, so a coding agent can complete deployment step by step from the check results:
 
-> Clone https://github.com/PluteW/isola, install dependencies, generate the configuration, and make `python -m isola doctor` pass completely.
+> Clone https://github.com/PluteW/isola, install dependencies, generate the configuration, and make `isola doctor` pass completely.
 
 **Or run the three manual steps:**
 
 ```bash
 git clone https://github.com/PluteW/isola && cd isola
-pip install -r requirements.txt                 # only PyYAML
-python -m isola init && python -m isola doctor
+pip install -e .                                # installs Isola + PyYAML; adds the isola command (any directory)
+isola init && isola doctor
 ```
 
 Edit `config.yaml` and point `harness` to the agent backend: OpenClaw CLI, or an OpenAI-compatible endpoint such as ollama or DeepSeek. After that, messages can enter through the same doorway and be routed by project attribution:
 
 ```bash
-python -m isola chat --text "Payment service: outline the rollback plan for this refactor"
-python -m isola chat --text "Data platform: investigate last night's sync job latency"
+isola chat --text "Payment service: outline the rollback plan for this refactor"
+isola chat --text "Data platform: investigate last night's sync job latency"
 # The two messages enter separate project sessions, and their memories are isolated.
 ```
 

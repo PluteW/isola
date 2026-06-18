@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "isola"
+version = "0.2.1"
+description = "Project-scoped memory for AI agent frameworks"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "PluteW" }]
+keywords = ["ai-agents", "agent-memory", "memory-management", "context-isolation", "llm"]
+dependencies = ["PyYAML>=6"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/PluteW/isola"
+
+[project.scripts]
+isola = "isola.__main__:main"
+
+# 显式列包，不用自动发现（避免误纳 tests/）
+[tool.setuptools]
+packages = ["isola", "isola.adapters"]
+
+[tool.setuptools.package-data]
+isola = ["config.example.yaml"]

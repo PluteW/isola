@@ -57,7 +57,7 @@ def test_build_core_routes_one():
 
 def test_example_config_no_plaintext_key():
     """config.example.yaml 不含明文 api_key（只 api_key_env）。"""
-    ex = pathlib.Path(__file__).parent.parent / "config.example.yaml"
+    ex = pathlib.Path(__file__).parent.parent / "isola" / "config.example.yaml"   # 包内数据
     text = ex.read_text(encoding="utf-8")
     assert not re.search(r"(?m)^\s*api_key\s*:", text), "含明文 api_key"
     assert "api_key_env" in text
@@ -218,6 +218,19 @@ def test_build_core_resolves_api_key_env():
             harness={"type": "llm_direct", "base_url": "http://x/v1", "model": "m", "api_key_env": "MW_TEST_KEY"})
         core = build_core(load_config(cp))          # 不应 TypeError（曾因 api_key_env 未剔除而崩）
         assert core is not None
+
+
+def test_cmd_init_writes_packaged_template():
+    """cmd_init 从包内 config.example.yaml 生成 config.yaml（扁平化后 package-data 可定位）。"""
+    import types
+    from isola.__main__ import cmd_init
+    with tempfile.TemporaryDirectory() as d:
+        dst = pathlib.Path(d) / "sub" / "config.yaml"          # 含嵌套：顺带验证父目录自动创建
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc = cmd_init(types.SimpleNamespace(path=str(dst)))
+        assert rc == 0 and dst.exists(), "应生成 config.yaml"
+        text = dst.read_text(encoding="utf-8")
+        assert "api_key_env" in text and "projects" in text, "内容应来自包内模板"
 
 
 if __name__ == "__main__":
