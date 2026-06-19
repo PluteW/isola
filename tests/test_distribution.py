@@ -233,6 +233,48 @@ def test_cmd_init_writes_packaged_template():
         assert "api_key_env" in text and "projects" in text, "内容应来自包内模板"
 
 
+def test_doctor_probe_openclaw_mjs():
+    """openclaw：无入口→fail+提示 --openclaw-dir；给目录搜到 .mjs→need_human+wrapper 指引（E3）。"""
+    import isola.doctor as doctor
+    with tempfile.TemporaryDirectory() as d:
+        (pathlib.Path(d) / "oc" / "sub").mkdir(parents=True)
+        (pathlib.Path(d) / "oc" / "sub" / "openclaw.mjs").write_text("// fake", encoding="utf-8")
+        cp = _write_config(d, harness={"type": "openclaw", "binary": "oc-nope-xyz", "agent": "main"})
+        orig_which, cwd0 = doctor.shutil.which, os.getcwd()
+        doctor.shutil.which = lambda _name: None         # 隔离：模拟 PATH 里无 openclaw/node
+        try:
+            os.chdir(d)                                  # 隔离：cwd 无 node_modules
+            h = [r for r in doctor.run(cp, {}) if r["id"] == "harness"][0]
+            assert h["status"] == "fail" and "--openclaw-dir" in h["evidence"], h
+            h2 = [r for r in doctor.run(cp, {"openclaw_dir": str(pathlib.Path(d) / "oc")})
+                  if r["id"] == "harness"][0]
+            assert h2["status"] == "need_human" and "openclaw.mjs" in h2["evidence"], h2
+        finally:
+            doctor.shutil.which = orig_which; os.chdir(cwd0)
+
+
+def test_doctor_emit_wrapper():
+    """--emit-wrapper 写 scripts/openclaw-bin（exec node mjs）；已存在不覆盖、--force 覆盖（E3 唯一写动作）。"""
+    import isola.doctor as doctor
+    with tempfile.TemporaryDirectory() as d:
+        (pathlib.Path(d) / "oc").mkdir()
+        (pathlib.Path(d) / "oc" / "openclaw.mjs").write_text("// fake", encoding="utf-8")
+        cp = _write_config(d, harness={"type": "openclaw", "binary": "oc-nope-xyz", "agent": "main"})
+        ctx = {"openclaw_dir": str(pathlib.Path(d) / "oc"), "node_path": sys.executable}
+        orig_which, cwd0 = doctor.shutil.which, os.getcwd()
+        doctor.shutil.which = lambda _name: None
+        try:
+            os.chdir(d)                                  # emit 写到 cwd/scripts
+            path, msg = doctor.emit_wrapper_if_requested(cp, ctx)
+            assert path and pathlib.Path(path).exists(), msg
+            body = pathlib.Path(path).read_text(encoding="utf-8")
+            assert "openclaw.mjs" in body and "exec" in body, body
+            assert doctor.emit_wrapper_if_requested(cp, ctx)[0] is None, "已存在应不覆盖"
+            assert doctor.emit_wrapper_if_requested(cp, {**ctx, "force": True})[0], "--force 应覆盖"
+        finally:
+            doctor.shutil.which = orig_which; os.chdir(cwd0)
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):

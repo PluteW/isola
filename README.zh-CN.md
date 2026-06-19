@@ -102,6 +102,8 @@ Isola 为 OpenClaw 这类框架而做，但不锁定任何一个后端。实现 
 
 `dispatch` 返回 `{ok, reply, turn_id, meta}`。其中 `ok` 表示后端是否成功处理，`reply` 为后端回复，`turn_id` 用于追踪后端轮次，`meta` 保留后端原生诊断信息。
 
+> **OpenClaw 不在 PATH？** 若 OpenClaw 以 `.mjs` 源码部署、无全局 `openclaw` 命令，用 `isola doctor --openclaw-dir <目录>` 探测，再 `--emit-wrapper` 生成 wrapper（`scripts/openclaw-bin`）并把 `harness.binary` 指过去；`node` 不在 PATH（如 conda）时用 `--node-path` 指定。
+
 ## 范围与路线
 
 当前 v1 提供可直接落地的 CLI 同步档：单机配置、项目级路由、独立 harness 会话、持久化状态、记忆隔离、纠正闭环与机器可读自检。该形态适合本地 agent 工作流，也为后续服务化形态提供稳定的状态与适配基础。

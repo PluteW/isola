@@ -75,7 +75,7 @@ def _resolve_store_path(raw_store: dict, cfg_dir: pathlib.Path) -> str:
 def load_config(path: str) -> Config:
     cfg_path = pathlib.Path(path).expanduser()
     if not cfg_path.exists():
-        raise ConfigError(f"配置文件不存在: {path}（先运行 `python -m isola init`）")
+        raise ConfigError(f"配置文件不存在: {path}（先运行 `isola init`）")
     raw = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ConfigError("配置顶层必须是 mapping（key: value 结构）")

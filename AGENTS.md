@@ -52,7 +52,15 @@ isola chat --text "查一下项目A的近况"
 ## OpenClaw 接入（人工停点，诚实声明 — 已对真实 CLI 2026.6.5 核对）
 `harness.type: openclaw` 时：**Isola 持有用户入口，OpenClaw 退为执行后端**
 （`openclaw agent --local --agent <role> --session-key proj:<id> --message <msg> --json`；adapter 命令已与真实 CLI 核对一致）。
-**真实卡点（实测确认）**：OpenClaw 有自己的 **model registry**，`--local` 直接 `--model <ollama-model>` 会报 `Unknown model: ...`——必须先在 OpenClaw 侧注册 provider（指向你的 LLM 端点，如本地 ollama 的 OpenAI 兼容 `http://localhost:11437/v1`）+ model。**此步无非交互一键命令**，故 doctor 标 `need_human`：
+
+**① 可执行入口（binary）**：adapter 需要一个可执行的 `harness.binary`。若 `which openclaw` 为空（OpenClaw 常以源码 `.mjs` 部署、无全局 bin），用 doctor 探测并自动造 wrapper：
+```bash
+isola doctor --openclaw-dir <你的 OpenClaw 目录>                     # 探测，定位 openclaw.mjs
+isola doctor --openclaw-dir <…> [--node-path <node>] --emit-wrapper  # 生成 scripts/openclaw-bin（node 不在 PATH 时用 --node-path，如 conda）
+# 再把 config.yaml 的 harness.binary 指向 scripts/openclaw-bin
+```
+
+**② 真实卡点（实测确认）**：OpenClaw 有自己的 **model registry**，`--local` 直接 `--model <ollama-model>` 会报 `Unknown model: ...`——必须先在 OpenClaw 侧注册 provider（指向你的 LLM 端点，如本地 ollama 的 OpenAI 兼容 `http://localhost:11437/v1`）+ model。**此步无非交互一键命令**，故 doctor 标 `need_human`：
 ```bash
 # 1) 在 OpenClaw 配置注册 provider(base_url→你的 LLM 端点) + model（见 OpenClaw 文档；交互配置）
 # 2) 验证（message 必须用 --message，不是位置参数）：

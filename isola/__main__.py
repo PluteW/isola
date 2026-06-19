@@ -26,12 +26,18 @@ def cmd_init(args):
 
 
 def cmd_doctor(args):
-    from .doctor import run, render
-    results = run(args.config)
+    from .doctor import run, render, emit_wrapper_if_requested
+    ctx = {"openclaw_dir": args.openclaw_dir, "node_path": args.node_path,
+           "emit_wrapper": args.emit_wrapper, "force": args.force}
+    results = run(args.config, ctx)                 # run 与各 check 全程只读
     if args.json:
         print(json.dumps(results, ensure_ascii=False, indent=2))
     else:
         render(results)
+    if args.emit_wrapper:                           # 唯一写动作：用户显式请求时才生成 wrapper
+        _, msg = emit_wrapper_if_requested(args.config, ctx)
+        # --json 时走 stderr，保持 stdout 为纯 results JSON（不破坏 agent 解析）
+        print(f"  emit-wrapper: {msg}", file=sys.stderr if args.json else sys.stdout)
     if any(r["status"] == "fail" for r in results):
         return 1
     if any(r["status"] == "need_human" for r in results):
@@ -82,9 +88,13 @@ def build_parser():
     sub = p.add_subparsers(dest="cmd", required=True)
     pi = sub.add_parser("init", help="生成 config 模板")
     pi.add_argument("--path", default=DEFAULT_CONFIG, help="目标配置路径")
-    pd = sub.add_parser("doctor", help="只读就绪自检")
+    pd = sub.add_parser("doctor", help="只读就绪自检（--emit-wrapper 时显式写一个 wrapper）")
     pd.add_argument("--config", default=DEFAULT_CONFIG)
     pd.add_argument("--json", action="store_true", help="机器可读输出")
+    pd.add_argument("--openclaw-dir", default=None, help="补 OpenClaw 安装目录，第二轮搜 openclaw.mjs")
+    pd.add_argument("--node-path", default=None, help="指定 node 可执行（wrapper 用；conda node 不在 PATH 时）")
+    pd.add_argument("--emit-wrapper", action="store_true", help="显式生成 scripts/openclaw-bin（默认只打印模板、只读）")
+    pd.add_argument("--force", action="store_true", help="配合 --emit-wrapper：覆盖已存在的 wrapper")
     pc = sub.add_parser("chat", help="同步处理消息（路由→投递→落记忆）")
     pc.add_argument("--config", default=DEFAULT_CONFIG)
     pc.add_argument("--text", default=None, help="单条消息；省略则进入交互循环")

@@ -102,6 +102,8 @@ Adapter contract:
 
 `dispatch` returns `{ok, reply, turn_id, meta}`. `ok` reports whether the backend handled the message successfully, `reply` contains the backend response, `turn_id` tracks the backend turn, and `meta` preserves backend-native diagnostics.
 
+> **OpenClaw not on PATH?** If OpenClaw ships as `.mjs` source with no global `openclaw` binary, run `isola doctor --openclaw-dir <dir>` to locate it, then `--emit-wrapper` to generate a launcher (`scripts/openclaw-bin`) and point `harness.binary` at it. Use `--node-path` when `node` isn't on PATH (e.g. conda).
+
 ## Status and Roadmap
 
 The current release provides a directly usable CLI sync workflow: single-machine configuration, project-scoped routing, isolated harness sessions, durable state, memory isolation, a correction loop, and machine-readable readiness checks. This form fits local agent workflows and establishes the same state and adapter foundation needed for later service deployments.

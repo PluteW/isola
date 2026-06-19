@@ -9,8 +9,8 @@ session_key=proj:<id> 经 --agent 作用域拼成 OpenClaw 的 agent:<role>:proj
   - OpenClaw --json 前常有 [diagnostic] 诊断行 → 健壮提取最后一个 JSON 对象；
   - 检查 meta.fallbackFrom 防 gateway-fallback 历史分叉（风险#4）；
   - idempotency_key 缓存防重投。
-与"自带记忆冲突"原则：部署时关闭 OpenClaw 的 memory slot/Dreaming，
-  Isola 为记忆唯一权威（见 README 部署说明，非本类职责）。
+记忆立场（双记忆保留，铁律）：Isola 与 OpenClaw 各自保留记忆、并存；Isola 不接管、不关闭
+  OpenClaw 的 memory/session。本类只负责投递，绝不触碰 OpenClaw 自带记忆与 session。
 """
 from __future__ import annotations
 import json
