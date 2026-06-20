@@ -55,8 +55,8 @@ class OpenClawAdapter:
         pass  # OpenClaw session 由 --session-key 惰性创建，无需预建
 
     def reset_session(self, session_key: str):
-        # OpenClaw 无直接 reset API；生产可改用新 session-key 后缀或 /reset 指令。
-        # v0.1 记为已知限制（路线图 自带记忆/会话补偿待 v0.2）。
+        # 铁律：绝不调 OpenClaw 真 reset（清空 session = 删改，违 session 不删改 + 毁卸载承诺）。
+        # 要"重开"由上层换新 session-key（旧会话原封不动）；session 累积是已知限制（M2，长期治理）。
         pass
 
     def dispatch(self, session_key: str, message: str, *, idempotency_key: str,
