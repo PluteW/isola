@@ -30,7 +30,7 @@ from .writeback import info_gate, durability, sensitive_gate
 _ALLOWED_FROM = {
     WAITING_CONFIRMATION: (TENTATIVE,),                 # 确认后 dispatch 失败 → 回退可重试
     TENTATIVE: (WAITING_CONFIRMATION,),                 # 低置信确认后才进 TENTATIVE
-    COMMITTED: (TENTATIVE,),                            # 仅 TENTATIVE 可提交
+    COMMITTED: (TENTATIVE, WAITING_CONFIRMATION),       # TENTATIVE=隔离期到期；WAITING=模式B confirm 单事务直达（§3B.6⑥）
     CORRECTED: (WAITING_CONFIRMATION, TENTATIVE, COMMITTED),  # 任意活跃态可被纠正
 }
 
@@ -133,15 +133,18 @@ class Store:
 
     # ---------- decisions：单活跃不变量（T-INV-3） ----------
     def insert_decision(self, d: RouteDecision, now: float | None = None) -> None:
-        """同 msg_id 已有 active decision → sqlite3.IntegrityError（partial unique）。"""
+        """同 msg_id 已有 active decision → sqlite3.IntegrityError（partial unique）。
+        state=COMMITTED 的插入（模式 B 高置信直达，§3B.6①）同时写 committed_at——
+        否则只写 created_at（模式 A 插 TENTATIVE/WAITING，committed_at 由 _transition_nc 补）。"""
         now = now if now is not None else time.time()
+        committed_at = now if d.state == COMMITTED else None
         self.db.execute(
             "INSERT INTO route_decisions(decision_id,msg_id,route_type,project_id,referenced_id,"
             "confidence_score,needs_confirmation,judge_raw,latency_ms,state,dispatch_state,"
-            "card_msg_id,parent_decision_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "card_msg_id,parent_decision_id,committed_at,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (d.decision_id, d.msg_id, d.route_type, d.project_id, d.referenced_id,
              d.confidence_score, int(d.needs_confirmation), d.judge_raw, d.latency_ms,
-             d.state, d.dispatch_state, d.card_msg_id, d.parent_decision_id, now))
+             d.state, d.dispatch_state, d.card_msg_id, d.parent_decision_id, committed_at, now))
         self.db.commit()
 
     def get_decision(self, decision_id: str):
@@ -304,6 +307,79 @@ class Store:
             return 0
         self.db.commit()
         return cur.rowcount
+
+    # ---------- 模式 B 专用原子（SDD v3 §3B.6：confirm 单事务 / 真事务纠错 / 结构化写入）----------
+    def confirm_to_committed(self, decision_id: str, project_id: int,
+                             now: float | None = None) -> bool:
+        """模式 B confirm（§3B.6⑥）：set project + WAITING_CONFIRMATION→COMMITTED **单事务直达**
+        （不经可观察 TENTATIVE 中间态；_transition_nc 顺带写 committed_at）。
+        返回是否成功（非可转移态 → False，事务不改任何字段）。"""
+        now = now if now is not None else time.time()
+        with self.db:                       # 原子：转移 + set project 一起提交或回滚
+            rc = self._transition_nc(decision_id, COMMITTED, now)
+            if rc == 1:
+                self.db.execute(
+                    "UPDATE route_decisions SET project_id=? WHERE decision_id=?",
+                    (project_id, decision_id))
+        return rc == 1
+
+    def apply_correction_and_retire(self, decision_id: str, from_pid, to_pid, user_id: str,
+                                    card_msg_id: str | None = None, now: float | None = None) -> bool:
+        """共享纠错原子（§3B.4 / §3B.6②）：旧 decision→CORRECTED + 记 correction + 取消写任务
+        + retire 其记忆，**单事务**（现状多方法各自 commit 有半提交风险）。模式 A/B 共用，
+        仅"重投"在 facade 分叉（A 重投、B 不重投）。返回是否成功（非活跃态/已 CORRECTED → False，
+        整事务无副作用 = 幂等）。"""
+        now = now if now is not None else time.time()
+        rc = 0
+        with self.db:                       # 原子：四步一起提交或一起回滚
+            rc = self._transition_nc(decision_id, CORRECTED, now)
+            if rc == 1:
+                self.db.execute(
+                    "INSERT INTO corrections(correction_id,decision_id,from_pid,to_pid,user_id,"
+                    "card_msg_id,created_at) VALUES(?,?,?,?,?,?,?)",
+                    (_id(), decision_id, from_pid, to_pid, user_id, card_msg_id, now))
+                self.db.execute(
+                    "UPDATE write_jobs SET status=? WHERE decision_id=? AND status IN (?,?)",
+                    (JOB_CANCELLED, decision_id, JOB_PENDING, JOB_RUNNING))
+                self.db.execute(
+                    "UPDATE memory_items SET state='retired',retired_at=? "
+                    "WHERE decision_id=? AND state='active'", (now, decision_id))
+        return rc == 1
+
+    def remember_for_decision(self, item: MemoryItem, now: float | None = None) -> dict:
+        """模式 B 记忆写入（§3B.3 / §3B.6④）：**单事务**内 re-check decision 仍 COMMITTED
+        （守 correct/remember 并发：不出现 CORRECTED decision 仍有 active 记忆，§3B.6⑦）→ 去重门
+        （同项目同内容）→ INSERT（decision_id UNIQUE = 一 decision 一记忆）。
+        结构化结果 {result: written|duplicate|invalid, kind: content|decision, item_id}。
+        info/sensitive 门由 core facade（mode_b.remember）先过——本方法只管原子写入 + 分类。"""
+        now = now if now is not None else time.time()
+        h = item.content_hash or _hash(item.content)
+        with self.db:                       # 原子：re-check 态 + 去重 + 写入
+            d = self.db.execute(
+                "SELECT state,project_id FROM route_decisions WHERE decision_id=?",
+                (item.decision_id,)).fetchone()
+            if d is None or d["state"] != COMMITTED or d["project_id"] is None:
+                return {"result": "invalid", "item_id": None}     # 与 correct 并发落败
+            dup = self.db.execute(
+                "SELECT item_id FROM memory_items WHERE project_id=? AND content_hash=? AND state='active'",
+                (item.project_id, h)).fetchone()
+            if dup:
+                return {"result": "duplicate", "kind": "content", "item_id": dup["item_id"]}
+            iid = _id()
+            try:
+                self.db.execute(
+                    "INSERT INTO memory_items(item_id,scope_level,project_id,content,source_msg_id,"
+                    "decision_id,content_hash,state,version,durability,created_at) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                    (iid, item.scope_level, item.project_id, item.content, item.source_msg_id,
+                     item.decision_id, h, item.state, item.version, item.durability, now))
+                return {"result": "written", "item_id": iid}
+            except sqlite3.IntegrityError:                        # decision_id UNIQUE → 一 decision 一记忆
+                row = self.db.execute(
+                    "SELECT item_id FROM memory_items WHERE decision_id=?",
+                    (item.decision_id,)).fetchone()
+                return {"result": "duplicate", "kind": "decision",
+                        "item_id": row["item_id"] if row else None}
 
     # ---------- 恢复扫描（T-REC-1~4）：每 job 单事务，含崩溃半状态补偿 ----------
     def recovery_scan(self, now: float | None = None) -> dict:

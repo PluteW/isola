@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "isola"
-version = "0.3.0"
+version = "0.4.0"
 description = "Project-scoped memory for AI agent frameworks"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -18,11 +18,15 @@ classifiers = [
   "Operating System :: OS Independent",
 ]
 
+[project.optional-dependencies]
+mcp = ["mcp>=1.0"]   # 模式 B 接入轨（isola-mcp，stdio）；核心不依赖，按需 `pip install isola[mcp]`
+
 [project.urls]
 Homepage = "https://github.com/PluteW/isola"
 
 [project.scripts]
 isola = "isola.__main__:main"
+isola-mcp = "isola.mcp_server:main"   # 模式 B MCP server（stdio）；需 `pip install isola[mcp]`
 
 # 显式列包，不用自动发现（避免误纳 tests/）
 [tool.setuptools]

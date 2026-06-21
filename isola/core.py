@@ -117,12 +117,11 @@ class IsolaCore:
         if self.registry.get(to_pid) is None:
             return {"status": "unknown_project", "project_id": to_pid}
         from_pid = d["project_id"]
-        if not self.store.set_decision_state(corr["decision_id"], CORRECTED, now=now):
-            return {"status": "invalid"}                   # 幂等：重放第二次 set 失败（CORRECTED 终态）
-        self.store.insert_correction(corr["decision_id"], from_pid, to_pid,
-                                     corr.get("user_id", "?"), d["card_msg_id"], now=now)
-        self.store.cancel_write_job(corr["decision_id"])
-        self.store.retire(decision_id=corr["decision_id"], now=now)
+        # 共享原子（§3B.4）：CORRECTED + 记 correction + 取消写任务 + retire 记忆，单事务（消半提交风险）
+        if not self.store.apply_correction_and_retire(
+                corr["decision_id"], from_pid, to_pid,
+                corr.get("user_id", "?"), d["card_msg_id"], now=now):
+            return {"status": "invalid"}                   # 幂等：CORRECTED 终态重放 → 事务回滚
         if d["card_msg_id"]:
             try:
                 self.channel.update_card(d["card_msg_id"], "corrected")

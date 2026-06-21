@@ -170,3 +170,17 @@ def build_core(cfg: Config) -> IsolaCore:
     reg = Registry(_registry_path(cfg))
     _seed_projects(reg, cfg.projects)
     return IsolaCore(store, reg, Router(judge), channel, harness, isolation_s=cfg.isolation_s)
+
+
+def build_memory_service(cfg: Config):
+    """从 Config 装配模式 B 的 MemoryService（SDD ③ §1）：仅 judge + store + registry，
+    **不构造 channel/harness**——模式 B 不 dispatch，故也不需要 harness 的 api_key。"""
+    from .mode_b import MemoryService
+    judge = _make(_JUDGES, cfg.judge, "judge")
+    sp = cfg.store.get("path", ":memory:")
+    if sp != ":memory:":
+        pathlib.Path(sp).parent.mkdir(parents=True, exist_ok=True)
+    store = Store(sp)
+    reg = Registry(_registry_path(cfg))
+    _seed_projects(reg, cfg.projects)
+    return MemoryService(store, reg, Router(judge))

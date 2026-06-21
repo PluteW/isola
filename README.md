@@ -31,12 +31,15 @@ Isola is a project-scoped memory routing layer placed in front of an agent. Each
 
 Isola does not replace OpenClaw, Claude Code, or Codex, and it does not require migration to a new agent framework. It is not a new execution framework or a general-purpose memory database. OpenClaw, Claude Code, Codex, or another agent backend still performs the work; Isola owns project attribution at the entry side, session isolation at the execution side, rollback on correction, and project-scoped read/write boundaries for memory.
 
+Isola supports two integration modes over one shared core. In **delegated mode**, Isola fronts the conversation and dispatches each attributed message to that project's backend session — the form described above. In **memory-service mode**, the agent is itself the entry point (Claude Code, Codex): it calls Isola over MCP to attribute a message (`route`), recall that project's memory (`recall`), runs the work itself, and writes the result back (`remember`). In memory-service mode Isola never dispatches and never touches a backend — it is purely the project-scoped attribution and memory layer. Attribution, soft assignment, correction, and the writeback gates are the same code in both modes.
+
 ## Features
 
 - **Automatic attribution and project isolation**: a three-stage attribution path assigns messages to projects; each project has its own backend session, and memories are not visible across projects.
 - **Soft assignment with a correction loop**: high-confidence messages are dispatched first, low-confidence messages require confirmation; wrong attribution can be corrected, and affected memories are retired.
 - **Durable state progression**: a SQLite source of truth, state machine, and recovery scan keep pending flows moving after process interruption.
 - **Harness-neutral integration**: direct LLM and OpenClaw CLI backends are built in; other agent backends can plug in through the same harness adapter contract.
+- **Two integration modes, one core**: delegated mode (Isola fronts and dispatches to a backend) and memory-service mode (an agent such as Claude Code or Codex calls Isola over MCP and executes itself). Both reuse the same attribution, isolation, correction, and memory code.
 
 ## Quick Start
 
@@ -59,6 +62,15 @@ isola chat --text "Payment service: outline the rollback plan for this refactor"
 isola chat --text "Data platform: investigate last night's sync job latency"
 # The two messages enter separate project sessions, and their memories are isolated.
 ```
+
+**Memory-service mode (MCP).** For agents that are themselves the entry point — Claude Code, Codex — run Isola as an MCP server instead of a fronting dispatcher. The agent calls `route` → `recall` → (executes the work itself) → `remember`; Isola never dispatches.
+
+```bash
+pip install -e ".[mcp]"             # adds the official mcp SDK and the isola-mcp command
+isola-mcp --config config.yaml      # stdio MCP server
+```
+
+Point your agent's MCP client at the `isola-mcp` command (stdio). It exposes five tools: `isola_route`, `isola_recall`, `isola_confirm`, `isola_remember`, `isola_correct`. `isola_recall` only takes a `decision_id`, so a project's memory cannot be read without first attributing the message (and confirming it, when attribution is low-confidence).
 
 ## How It Works
 
@@ -106,7 +118,7 @@ Adapter contract:
 
 ## Status and Roadmap
 
-The current release provides a directly usable CLI sync workflow: single-machine configuration, project-scoped routing, isolated harness sessions, durable state, memory isolation, a correction loop, and machine-readable readiness checks. This form fits local agent workflows and establishes the same state and adapter foundation needed for later service deployments.
+The current release provides two usable forms. A CLI sync workflow (delegated mode): single-machine configuration, project-scoped routing, isolated harness sessions, durable state, memory isolation, a correction loop, and machine-readable readiness checks. And an MCP memory-service mode (`isola-mcp`, stdio): attribution, recall, confirmation, writeback, and correction exposed as tools for agents that execute themselves. Both share one core boundary and the state foundation needed for later service deployments.
 
 Persistent serve mode, HTTP inbound traffic, multi-user support and authentication, and IM integrations such as Feishu and Slack are on the roadmap. Future work keeps the same core boundary: Isola owns project attribution, isolation, correction, and memory boundaries; execution remains delegated to the agent backend chosen by the user.
 
