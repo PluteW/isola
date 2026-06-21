@@ -15,6 +15,7 @@ v0.1 失败处理边界：
 from __future__ import annotations
 import time
 import uuid
+import sqlite3
 from .models import (
     RouteDecision, WAITING_CONFIRMATION, TENTATIVE, CORRECTED,
     DISP_SENT, DISP_PENDING, DISP_FAILED,
@@ -53,11 +54,14 @@ class IsolaCore:
         low = (rd.confidence == "low") or (rd.project_id is None)
 
         if low:
-            self.store.insert_decision(RouteDecision(
-                decision_id=decision_id, msg_id=msg_id, route_type=rd.route,
-                project_id=rd.project_id, referenced_id=rd.referenced_id,
-                confidence_score=0.4, needs_confirmation=True, judge_raw=rd.judge_raw,
-                state=WAITING_CONFIRMATION, dispatch_state=DISP_PENDING), now=now)
+            try:
+                self.store.insert_decision(RouteDecision(
+                    decision_id=decision_id, msg_id=msg_id, route_type=rd.route,
+                    project_id=rd.project_id, referenced_id=rd.referenced_id,
+                    confidence_score=0.4, needs_confirmation=True, judge_raw=rd.judge_raw,
+                    state=WAITING_CONFIRMATION, dispatch_state=DISP_PENDING), now=now)
+            except sqlite3.IntegrityError:
+                return {"status": "duplicate"}             # 同 msg 已有活跃 decision（重投：异 event_id 同 platform_msg_id）
             try:
                 card = self.channel.send_confirm_card(msg.chat_id, msg.text, projects, decision_id)
                 self.store.update_dispatch(decision_id, card_msg_id=card)
@@ -67,11 +71,14 @@ class IsolaCore:
             return {"status": "awaiting_confirmation", "decision_id": decision_id}
 
         # 高置信：先落 decision(TENTATIVE, DISP_PENDING)，再 dispatch（满足 record 先于副作用）
-        self.store.insert_decision(RouteDecision(
-            decision_id=decision_id, msg_id=msg_id, route_type=rd.route,
-            project_id=rd.project_id, referenced_id=rd.referenced_id,
-            confidence_score=0.9, judge_raw=rd.judge_raw,
-            state=TENTATIVE, dispatch_state=DISP_PENDING), now=now)
+        try:
+            self.store.insert_decision(RouteDecision(
+                decision_id=decision_id, msg_id=msg_id, route_type=rd.route,
+                project_id=rd.project_id, referenced_id=rd.referenced_id,
+                confidence_score=0.9, judge_raw=rd.judge_raw,
+                state=TENTATIVE, dispatch_state=DISP_PENDING), now=now)
+        except sqlite3.IntegrityError:
+            return {"status": "duplicate"}                 # 同 msg 已有活跃 decision（重投兜底，与模式 B route 一致）
         reply = self._dispatch_and_card(decision_id, rd.project_id, msg.text, msg.chat_id,
                                         referenced_id=rd.referenced_id)
         if reply is None:                                   # dispatch 失败（session 未污染）→ 删除可重发

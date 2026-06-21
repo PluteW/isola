@@ -236,6 +236,36 @@ def test_int_blank_message_robust(*_):
         os.path.exists(p) and os.remove(p)
 
 
+def test_int_redelivery_high_typed_duplicate():
+    """重投同 platform_msg_id、异 event_id（高置信路径）→ typed duplicate，不抛 IntegrityError（外审 P2，与模式 B route 对齐）。"""
+    core, store, ch, hn, p = _build(judge_pid=1)
+    try:
+        r1 = core.handle_message(_msg("查一下甲公司近三年毛利率", eid="e1", pmid="pmX"), now=T0)
+        assert r1["status"] == "dispatched", r1
+        r2 = core.handle_message(_msg("查一下甲公司近三年毛利率", eid="e2", pmid="pmX"), now=T0)
+        assert r2["status"] == "duplicate", r2          # 同 pmid 异 eid：msg 级唯一索引兜底，不炸穿
+        r3 = core.handle_message(_msg("查一下甲公司近三年毛利率", eid="e1", pmid="pmX"), now=T0)
+        assert r3["status"] == "duplicate", r3          # 同 eid：event 级幂等
+        assert store.count("route_decisions") == 1
+        assert len(hn.dispatches) == 1                  # 第二、三次未触达后端
+    finally:
+        os.path.exists(p) and os.remove(p)
+
+
+def test_int_redelivery_low_typed_duplicate():
+    """低置信路径同样：重投同 platform_msg_id、异 event_id → duplicate，不抛、不重复建 decision / 不再发卡。"""
+    core, store, ch, hn, p = _build(judge_pid=0)
+    try:
+        r1 = core.handle_message(_msg("帮我整理一下这个东西", eid="e1", pmid="pmL"), now=T0)
+        assert r1["status"] == "awaiting_confirmation", r1
+        r2 = core.handle_message(_msg("帮我整理一下这个东西", eid="e2", pmid="pmL"), now=T0)
+        assert r2["status"] == "duplicate", r2
+        assert store.count("route_decisions") == 1
+        assert len(ch.confirm_cards) == 1               # 第二次未再发确认卡
+    finally:
+        os.path.exists(p) and os.remove(p)
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in sorted(globals().items()):
