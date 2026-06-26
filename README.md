@@ -72,6 +72,8 @@ isola-mcp --config config.yaml      # stdio MCP server
 
 Point your agent's MCP client at the `isola-mcp` command (stdio). It exposes five tools: `isola_route`, `isola_recall`, `isola_confirm`, `isola_remember`, `isola_correct`. `isola_recall` only takes a `decision_id`, so a project's memory cannot be read without first attributing the message (and confirming it, when attribution is low-confidence).
 
+**No LLM API key?** Set the judge in `config.yaml` to `{ type: manual }` (attribution by confirmation) or `{ type: cli, command: "claude -p" }` (attribution via your already–logged-in CLI agent). `isola-mcp` then starts without any LLM endpoint or key.
+
 ## How It Works
 
 ```text

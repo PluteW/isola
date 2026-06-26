@@ -5,6 +5,11 @@ judge:
   base_url: "https://api.deepseek.com"
   model: "deepseek-chat"
   api_key_env: JUDGE_API_KEY        # 读取环境变量 JUDGE_API_KEY 作为判定器密钥
+  # —— 无 key 选项（U1）：不想配 LLM 判定器时，把上面整个 judge 段换成下面之一 ——
+  # 手动/离线（route 一律转确认，归属交 agent/用户；isola-mcp 可无 key 启动）：
+  #   judge: { type: manual }
+  # 用已登录的本地 CLI agent 当判定器（无 key 自动归属）：
+  #   judge: { type: cli, command: "claude -p" }    # command 换成你已登录的任意 CLI agent 命令即可
 harness:
   type: llm_direct                  # 可选: openclaw（走 OpenClaw CLI）
   base_url: "https://api.deepseek.com"

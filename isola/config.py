@@ -17,7 +17,7 @@ from .store import Store
 from .registry import Registry
 from .router import Router
 from .core import IsolaCore
-from .judge import OpenAICompatJudge
+from .judge import OpenAICompatJudge, ManualJudge, CLIJudge
 from .adapters.cli import CLIChannel
 from .adapters.llm_harness import LLMHarness
 from .adapters.openclaw import OpenClawAdapter
@@ -41,7 +41,7 @@ class Config:
 # ---- 注册表：type → 构造（模块级 dict）----
 _CHANNELS = {"cli": CLIChannel}
 _HARNESSES = {"openclaw": OpenClawAdapter, "llm_direct": LLMHarness}
-_JUDGES = {"openai_compat": OpenAICompatJudge}
+_JUDGES = {"openai_compat": OpenAICompatJudge, "manual": ManualJudge, "cli": CLIJudge}
 _KEY_REQUIRED = {"openai_compat", "llm_direct"}        # 这些 type 必须配 api_key_env
 
 # 疑似明文密钥的键名（递归扫描全配置；*_env 键豁免）——：防 token/Authorization/嵌套绕过

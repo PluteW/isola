@@ -72,6 +72,8 @@ isola-mcp --config config.yaml      # stdio MCP server
 
 把 agent 的 MCP 客户端指向 `isola-mcp` 命令（stdio）即可。它暴露五个工具：`isola_route`、`isola_recall`、`isola_confirm`、`isola_remember`、`isola_correct`。`isola_recall` 只接受 `decision_id`，因此不先判定归属（低置信再确认）就拿不到某个项目的记忆。
 
+**没有 LLM API key？** 在 `config.yaml` 把 judge 设成 `{ type: manual }`（归属交确认）或 `{ type: cli, command: "claude -p" }`（用你已登录的 CLI agent 判定）——`isola-mcp` 即可无任何 LLM 端点 / key 启动。
+
 ## 工作原理
 
 ```text

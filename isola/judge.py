@@ -7,6 +7,7 @@
 from __future__ import annotations
 import re
 import json
+import subprocess
 import urllib.request
 
 
@@ -64,3 +65,35 @@ class OpenAICompatJudge:
         except Exception as e:                       # 超时/网络/解析错 → 无法判断（降级）
             return None, f"error:{type(e).__name__}"
         return parse_judge_output(out, projects)
+
+
+class ManualJudge:
+    """手动 / 离线判定器：从不自动判定（始终无法判断）→ route 一律低置信、交确认。
+    无需 LLM 端点 / api_key——让 isola-mcp 等服务在无 key 环境也能启动（U1）；归属由调用方 agent / 用户确认。"""
+
+    def attribute(self, text, projects, history):
+        return None, "manual:待确认"
+
+
+class CLIJudge:
+    """无 key 判定器：把判定 prompt 交给一个已登录的本地 CLI agent（如 `claude -p` / ` exec`）。
+    command：命令前缀（prompt 作为最后一个参数追加），字符串或列表——如 "claude -p"、["","exec"]。
+    复用同一判定 prompt（含 last-6 历史）；无需 api_key——无 key 环境也能自动归属（U1）。"""
+
+    def __init__(self, command, timeout: int = 120):
+        self.command = command.split() if isinstance(command, str) else list(command)
+        self.timeout = int(timeout)
+
+    def attribute(self, text, projects, history):
+        sys_p, usr_p = (m["content"] for m in build_messages(text, projects, history))
+        prompt = sys_p + "\n\n" + usr_p + "\n\n只输出一行 `答案: N`（N=项目编号或 0），别的都不要。"
+        try:
+            r = subprocess.run(self.command + [prompt], capture_output=True, text=True, timeout=self.timeout)
+        except Exception as e:                        # 进程/超时错 → 无法判断（降级，route 转确认）
+            return None, f"error:{type(e).__name__}"
+        if r.returncode != 0:
+            return None, f"error:rc={r.returncode}"
+        m = re.search(r"答案\s*[:：]\s*(\d+)", r.stdout or "")
+        if m and m.group(1) in ({str(p['id']) for p in projects} | {"0"}):
+            return int(m.group(1)), (r.stdout or "").strip()[-80:]
+        return parse_judge_output(r.stdout, projects)
